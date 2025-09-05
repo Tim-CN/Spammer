@@ -147,7 +147,7 @@
         async function loadStudentData() {
             try {
                 loading.style.display = 'block';
-                const response = await fetch('/DATA/students.txt');
+                const response = await fetch('/DATA/students.data');
                 
                 if (!response.ok) {
                     throw new Error(`HTTP错误! 状态: ${response.status}`);
