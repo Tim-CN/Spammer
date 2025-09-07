@@ -118,184 +118,96 @@
 <body>
     <div class="container">
         <h1>课堂随机抽人</h1>
-        <div class="name-display" id="nameDisplay">正在加载学生数据...</div>
+        <div class="name-display" id="nameDisplay">准备开始</div>
         <div class="buttons">
-            <button id="startBtn" disabled>开始抽人</button>
+            <button id="startBtn">开始抽人</button>
             <button id="stopBtn" disabled>停止抽人</button>
         </div>
-        <div class="loading" id="loading">正在从服务器加载学生数据...</div>
         <div class="error" id="error"></div>
         <div class="footer">随机选择一名学生回答问题</div>
     </div>
 
     <script>
-        // 获取DOM元素
-        const nameDisplay = document.getElementById('nameDisplay');
-        const startBtn = document.getElementById('startBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const loading = document.getElementById('loading');
-        const error = document.getElementById('error');
+        const xmxs = [
+            '朱梓煊','张庭瑞','张雨泽','郎悦乔','叶子宸','徐子涵','孟想','许意欣','常博','黄柏然',
+            '顾含萱','沈徐胤辰','汤昊承','胡钧雅','颜子依','曹雨涵','吴冰童','蒋钰宁','厉夏','何雨佳',
+            '詹婕晗','胡芸溪','李一诺','山子越','姜易泽','杨舒予','高嘉乐','郭知音','陈俊熙','杨昃霖',
+            '梁彧馨','邢家凯','张舒云','赵雪妍','沈雨轩','金奕辰','卢思越','陆希','吴紫萱','周浩洋',
+            '顾启洋','陈艺芯','沈鋆哲','沈子恒','施邵杰','王君萧','胡嘉祺','许子轩','刘伊哲'
+        ];
         
-        // 定义变量
-        let isSelecting = false;
-        let selectionInterval;
-        let selectedStudent = '';
-        let students_true = {};
-        let students_false = [];
+        const xz = document.getElementById('nameDisplay');
+        const ksa = document.getElementById('startBtn');
+        const tza = document.getElementById('stopBtn');
+        const cw = document.getElementById('error');
         
-        // 从服务器加载学生数据
-        async function loadStudentData() {
-            try {
-                loading.style.display = 'block';
-                const response = await fetch('/DATA/students.data');
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP错误! 状态: ${response.status}`);
-                }
-                
-                const data = await response.text();
-                parseStudentData(data);
-                
-                loading.style.display = 'none';
-                startBtn.disabled = false;
-                nameDisplay.textContent = "点击开始按钮抽取学生";
-                
-            } catch (err) {
-                console.error('加载学生数据失败:', err);
-                loading.style.display = 'none';
-                error.style.display = 'block';
-                error.textContent = `加载数据失败: ${err.message}. 使用默认数据`;
-                
-                // 使用默认数据作为备选
-                students_true = {
-                    '曹雨涵': 1,
-                    '厉夏': 10,
-                    '张三': 5,
-                    '李四': 3,
-                    '王五': 7,
-                    '赵六': 2,
-                    '钱七': 4,
-                    '孙八': 6
-                };
-                
-                students_false = ['曹雨涵', '厉夏', '张三', '李四', '王五', '赵六', '钱七', '孙八'];
-                
-                startBtn.disabled = false;
-                nameDisplay.textContent = "点击开始按钮抽取学生";
-            }
-        }
+        let xzjn = false;
+        let jg;
+        let xs;
         
-        // 解析学生数据
-        function parseStudentData(data) {
-            try {
-                // 使用更健壮的解析方法
-                const trueMatch = data.match(/students_true\s*=\s*{([^}]*)}/);
-                if (trueMatch && trueMatch[1]) {
-                    const trueContent = trueMatch[1];
-                    // 分割并清理数据
-                    const trueLines = trueContent.split(',')
-                        .map(line => line.trim())
-                        .filter(line => line);
-                    
-                    students_true = {};
-                    trueLines.forEach(line => {
-                        // 支持多种格式: '名字':权重 或 "名字":权重
-                        const match = line.match(/['"]([^'"]+)['"]\s*:\s*([\d.]+)/);
-                        if (match) {
-                            students_true[match[1]] = parseFloat(match[2]);
-                        }
-                    });
-                }
-                
-                // 解析students_false
-                const falseMatch = data.match(/students_false\s*=\s*{([^}]*)}/);
-                if (falseMatch && falseMatch[1]) {
-                    const falseContent = falseMatch[1];
-                    // 分割并清理数据
-                    students_false = falseContent.split(',')
-                        .map(name => name.trim().replace(/['"]/g, ''))
-                        .filter(name => name);
-                }
-                
-                console.log('解析的学生数据:', { students_true, students_false });
-                
-            } catch (err) {
-                console.error('解析学生数据失败:', err);
-                throw new Error('数据格式不正确');
-            }
-        }
+        const xsQz = {
+            '朱梓煊':0.5,'张庭瑞':0.5,'张雨泽':1,'郎悦乔':1,'叶子宸':1,'徐子涵':1,'孟想':1,'许意欣':1,
+            '常博':1,'黄柏然':1,'顾含萱':1,'沈徐胤辰':1,'汤昊承':1,'胡钧雅':1,'颜子依':1,'曹雨涵':1,
+            '吴冰童':1,'蒋钰宁':1,'厉夏':1,'何雨佳':1,'詹婕晗':1,'胡芸溪':1,'李一诺':1,'山子越':1,
+            '姜易泽':1,'杨舒予':1,'高嘉乐':1,'郭知音':1,'陈俊熙':1,'杨昃霖':1,'梁彧馨':1,'邢家凯':1,
+            '张舒云':1,'赵雪妍':1,'沈雨轩':1,'金奕辰':1,'卢思越':1,'陆希':1,'吴紫萱':1,'周浩洋':1,
+            '顾启洋':1,'陈艺芯':1,'沈鋆哲':1,'沈子恒':1,'施邵杰':1,'王君萧':1,'胡嘉祺':1,'许子轩':1,
+            '刘伊哲':1
+        };
         
-        // 按权重随机选择学生
-        function selectStudentByWeight() {
-            // 计算总权重
-            const totalWeight = Object.values(students_true).reduce((sum, weight) => sum + weight, 0);
-            
-            // 生成一个随机数
-            const random = Math.random() * totalWeight;
-            
-            // 根据权重选择学生
-            let current = 0;
-            for (const [name, weight] of Object.entries(students_true)) {
-                current += weight;
-                if (random <= current) {
-                    return name;
+        function xsxz() {
+            const zqz = Object.values(xsQz).reduce((s, w) => s + w, 0);
+            const sj = Math.random() * zqz;
+            let dq = 0;
+            for (const [xm, qz] of Object.entries(xsQz)) {
+                dq += qz;
+                if (sj <= dq) {
+                    return xm;
                 }
             }
-            
-            // 如果由于浮点精度问题没有返回，返回最后一个学生
-            return Object.keys(students_true).pop();
+            return Object.keys(xsQz).pop();
         }
         
-        // 开始选择
-        function startSelection() {
-            if (Object.keys(students_true).length === 0 || students_false.length === 0) {
-                error.style.display = 'block';
-                error.textContent = '没有可用的学生数据';
+        function ksz() {
+            if (Object.keys(xsQz).length === 0 || xmxs.length === 0) {
+                cw.style.display = 'block';
+                cw.textContent = '没有可用的学生数据';
                 return;
             }
             
-            isSelecting = true;
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
-            error.style.display = 'none';
-            nameDisplay.classList.remove('highlight');
+            xzjn = true;
+            ksa.disabled = true;
+            tza.disabled = false;
+            cw.style.display = 'none';
+            xz.classList.remove('highlight');
             
-            // 先按权重选择实际要抽中的学生
-            selectedStudent = selectStudentByWeight();
-            console.log('实际抽中学生:', selectedStudent); // 仅用于调试
+            xs = xsxz();
             
-            // 开始快速闪烁显示学生名字
-            let index = 0;
-            selectionInterval = setInterval(() => {
-                nameDisplay.textContent = students_false[index];
-                index = (index + 1) % students_false.length;
+            let sy = 0;
+            jg = setInterval(() => {
+                xz.textContent = xmxs[sy];
+                sy = (sy + 1) % xmxs.length;
             }, 100);
         }
         
-        // 停止选择
-        function stopSelection() {
-            isSelecting = false;
-            clearInterval(selectionInterval);
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
+        function tzz() {
+            xzjn = false;
+            clearInterval(jg);
+            ksa.disabled = false;
+            tza.disabled = true;
             
-            // 显示实际抽中的学生
-            nameDisplay.textContent = selectedStudent;
-            nameDisplay.classList.add('highlight');
+            xz.textContent = xs;
+            xz.classList.add('highlight');
         }
         
-        // 初始化
-        function init() {
-            // 添加事件监听器
-            startBtn.addEventListener('click', startSelection);
-            stopBtn.addEventListener('click', stopSelection);
+        function csh() {
+            ksa.addEventListener('click', ksz);
+            tza.addEventListener('click', tzz);
             
-            // 加载学生数据
-            loadStudentData();
+            xz.textContent = "点击开始按钮抽取学生";
         }
         
-        // 页面加载完成后初始化
-        window.addEventListener('load', init);
+        window.addEventListener('load', csh);
     </script>
 </body>
 </html>
